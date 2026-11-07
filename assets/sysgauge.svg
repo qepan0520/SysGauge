@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1B2942"/>
+      <stop offset="1" stop-color="#0A101C"/>
+    </linearGradient>
+    <linearGradient id="cpu" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#60A5FA"/>
+      <stop offset="1" stop-color="#3D7EFF"/>
+    </linearGradient>
+    <linearGradient id="mem" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FBBF24"/>
+      <stop offset="1" stop-color="#F97316"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.3" r="0.65">
+      <stop offset="0" stop-color="#3D7EFF" stop-opacity="0.26"/>
+      <stop offset="1" stop-color="#3D7EFF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect x="0" y="0" width="256" height="256" rx="58" fill="url(#bg)"/>
+  <rect x="10" y="10" width="236" height="236" rx="50" fill="url(#glow)"/>
+  <rect x="5" y="5" width="246" height="246" rx="54" fill="none" stroke="#2B3A52" stroke-width="2"/>
+
+  <!-- 刻度 -->
+  <g stroke="#64748B" stroke-width="4" stroke-linecap="round" opacity="0.7">
+    <line x1="128" y1="36" x2="128" y2="47" transform="rotate(-90 128 140)"/>
+    <line x1="128" y1="36" x2="128" y2="47" transform="rotate(-45 128 140)"/>
+    <line x1="128" y1="36" x2="128" y2="47" transform="rotate(0 128 140)"/>
+    <line x1="128" y1="36" x2="128" y2="47" transform="rotate(45 128 140)"/>
+    <line x1="128" y1="36" x2="128" y2="47" transform="rotate(90 128 140)"/>
+  </g>
+
+  <!-- 外圈：CPU 轨道与进度 -->
+  <path d="M 47.19 169.41 A 86 86 0 1 1 208.81 169.41"
+        fill="none" stroke="#243147" stroke-width="16" stroke-linecap="round"/>
+  <path d="M 47.19 169.41 A 86 86 0 0 1 196.5 88.0"
+        fill="none" stroke="url(#cpu)" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- 内圈：内存轨道与进度 -->
+  <path d="M 67.86 161.89 A 64 64 0 1 1 188.14 161.89"
+        fill="none" stroke="#1E2A3D" stroke-width="12" stroke-linecap="round"/>
+  <path d="M 67.86 161.89 A 64 64 0 0 1 132.9 76.2"
+        fill="none" stroke="url(#mem)" stroke-width="12" stroke-linecap="round"/>
+
+  <!-- 指针与中心轴 -->
+  <line x1="117.5" y1="149.3" x2="168.3" y2="104.1"
+        stroke="#F8FAFC" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="171.0" cy="101.5" r="5.2" fill="#E2E8F0"/>
+  <circle cx="128" cy="140" r="14" fill="#F8FAFC"/>
+  <circle cx="128" cy="140" r="5.5" fill="#3D7EFF"/>
+</svg>
