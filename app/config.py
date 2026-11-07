@@ -13,6 +13,8 @@ import logging
 import os
 from dataclasses import asdict, dataclass, field, fields
 
+from .i18n import normalize_language
+
 logger = logging.getLogger(__name__)
 
 APP_DIR_NAME = "SysGauge"
@@ -67,6 +69,7 @@ class AppConfig:
     # 界面
     minimize_to_tray: bool = True
     auto_scale: bool = False  # 图表纵轴自适应（贴谷 / 贴峰）
+    language: str = ""  # 界面语言，空字符串表示跟随系统
     window_geometry: str | None = None  # base64(winId 序列化后的 QByteArray)
 
     # 运行时状态（不落盘）
@@ -91,6 +94,10 @@ class AppConfig:
 
         if not isinstance(self.save_dir, str) or not self.save_dir.strip():
             self.save_dir = default_save_dir()
+        if not isinstance(self.language, str) or not self.language:
+            self.language = ""
+        else:
+            self.language = normalize_language(self.language)
         if not isinstance(self.window_geometry, str):
             self.window_geometry = None
         return self

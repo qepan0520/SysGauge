@@ -6,16 +6,16 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows&logoColor=white)
-![Version](https://img.shields.io/badge/Version-1.1.0-blue)
+![Version](https://img.shields.io/badge/Version-1.2.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 SysGauge 基于 `psutil` 采集系统指标，使用 PySide6 + pyqtgraph 绘制实时曲线，并在每次采样后立即 `flush + fsync` 写入 CSV。适合长时间记录 CPU / 内存占用、排查卡顿、制作性能测试报告。
 
 ## 界面预览
 
-![主窗口](docs/screenshots/main-window.png)
+![主窗口](docs/screenshots/main-zh.png)
 
-![历史数据](docs/screenshots/history.png)
+![历史数据](docs/screenshots/history-zh.png)
 
 ## 功能特性
 
@@ -30,6 +30,7 @@ SysGauge 基于 `psutil` 采集系统指标，使用 PySide6 + pyqtgraph 绘制�
 - **托盘常驻**：关闭窗口默认最小化到托盘继续记录；托盘图标颜色随 CPU 占用率变化。
 - **单实例运行**：重复启动会激活已有窗口，避免多个实例同时写数据。
 - **明暗主题自适应**：图表配色取自系统调色板，跟随窗口主题变化。
+- **多语言界面**：支持英文、简体中文、日本語、Deutsch、Español，主窗口内即可切换；选择会被记住，首次启动跟随系统语言。
 
 ## 环境要求
 
@@ -138,6 +139,7 @@ SysGauge/
 │   ├── metrics.py        # psutil 指标采集与 CSV 列定义
 │   ├── sampler.py        # 采样线程（绝对时间调度）
 │   ├── recorder.py       # CSV 追加写入、fsync、文件切分
+│   ├── i18n.py           # 界面文案与语言切换
 │   └── config.py         # 配置读写与校验
 ├── assets/               # 应用图标（ICO / SVG）
 ├── docs/screenshots/     # README 截图

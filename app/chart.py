@@ -21,6 +21,8 @@ from PySide6.QtCore import QEvent, Qt
 from PySide6.QtGui import QColor, QPalette
 from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 
+from .i18n import tr, tr_raw
+
 logger = logging.getLogger(__name__)
 
 CPU_COLOR = "#3D7EFF"
@@ -105,8 +107,12 @@ class LiveChartWidget(QWidget):
         self.plot = pg.PlotWidget(viewBox=self._vb, axisItems=axis_items)
         self.plot.setMenuEnabled(False)
         self.plot.showGrid(x=True, y=True, alpha=0.2)
-        self.plot.setLabel("left", "占用率", units="%")
-        self.plot.setLabel("bottom", "时间" if date_axis else "运行时长", units=None if date_axis else "s")
+        self.plot.setLabel("left", tr("chart.y_label"), units="%")
+        self.plot.setLabel(
+            "bottom",
+            tr("chart.x_time") if date_axis else tr("chart.x_elapsed"),
+            units=None if date_axis else "s",
+        )
         self.plot.setYRange(Y_MIN, Y_MAX, padding=0)
         self.plot.hideButtons()
 
@@ -117,7 +123,7 @@ class LiveChartWidget(QWidget):
 
         self._legend = self.plot.addLegend(offset=(-10, 10))
         self._cpu_curve = self.plot.plot([], [], pen=pg.mkPen(CPU_COLOR, width=2), name="CPU")
-        self._mem_curve = self.plot.plot([], [], pen=pg.mkPen(MEM_COLOR, width=2), name="内存")
+        self._mem_curve = self.plot.plot([], [], pen=pg.mkPen(MEM_COLOR, width=2), name=tr("chart.mem"))
         for curve in (self._cpu_curve, self._mem_curve):
             # pyqtgraph 0.13/0.14 的形参为 (ds, auto, method)：
             # pyqtgraph 在软件层面按下采样方法抽稀，点数远超像素宽度时仍然流畅。
@@ -129,14 +135,14 @@ class LiveChartWidget(QWidget):
             angle=0,
             movable=False,
             pen=pg.mkPen("#0EA5E9", width=1, style=Qt.PenStyle.DashLine),
-            label="最低 {value:.1f}%",
+            label=tr_raw("chart.low"),
             labelOpts={"position": 0.06, "color": "#0EA5E9"},
         )
         self._high_line = pg.InfiniteLine(
             angle=0,
             movable=False,
             pen=pg.mkPen("#F97316", width=1, style=Qt.PenStyle.DashLine),
-            label="最高 {value:.1f}%",
+            label=tr_raw("chart.high"),
             labelOpts={"position": 0.06, "color": "#F97316"},
         )
         for line in (self._low_line, self._high_line):
@@ -342,7 +348,7 @@ class LiveChartWidget(QWidget):
         time_text = datetime.fromtimestamp(wall).strftime("%m-%d %H:%M:%S")
         cpu_text = "--" if not np.isfinite(self._cpu[index]) else f"{float(self._cpu[index]):.1f}%"
         mem_text = "--" if not np.isfinite(self._mem[index]) else f"{float(self._mem[index]):.1f}%"
-        self._tooltip.setText(f"{time_text}\nCPU    {cpu_text}\n内存  {mem_text}")
+        self._tooltip.setText(tr("chart.tooltip", time=time_text, cpu=cpu_text, mem=mem_text))
         self._tooltip.adjustSize()
 
         plot_pos = self.plot.mapFromScene(pos)
@@ -439,6 +445,22 @@ class LiveChartWidget(QWidget):
         )
 
     # ---------- 通用 ----------
+
+    def retranslate(self) -> None:
+        """语言切换后刷新坐标轴、图例与极值标记。"""
+        self.plot.setLabel("left", tr("chart.y_label"), units="%")
+        self.plot.setLabel(
+            "bottom",
+            tr("chart.x_time") if self._date_axis else tr("chart.x_elapsed"),
+            units=None if self._date_axis else "s",
+        )
+        self._legend.clear()
+        self._legend.addItem(self._cpu_curve, "CPU")
+        self._legend.addItem(self._mem_curve, tr("chart.mem"))
+        for line, key in ((self._low_line, "chart.low"), (self._high_line, "chart.high")):
+            if getattr(line, "label", None) is not None:
+                line.label.setFormat(tr_raw(key))
+        self._hide_hover()
 
     def clear(self) -> None:
         self._t = np.empty(0, dtype=float)

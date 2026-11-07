@@ -27,6 +27,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
 )
 
+from .i18n import tr
+
 from .chart import LiveChartWidget
 
 logger = logging.getLogger(__name__)
@@ -44,7 +46,7 @@ class HistoryDialog(QDialog):
         self._current_path: str | None = None
         self._auto_scale_default = bool(auto_scale)
 
-        self.setWindowTitle("历史数据")
+        self.setWindowTitle(tr("history.title"))
         self.resize(1000, 660)
         self._build_ui()
 
@@ -56,30 +58,27 @@ class HistoryDialog(QDialog):
         root.setSpacing(10)
 
         toolbar = QHBoxLayout()
-        self._open_btn = QPushButton("打开 CSV 文件…")
+        self._open_btn = QPushButton(tr("history.open"))
         self._open_btn.clicked.connect(self._on_open)
         toolbar.addWidget(self._open_btn)
 
-        self._reload_btn = QPushButton("重新加载")
+        self._reload_btn = QPushButton(tr("history.reload"))
         self._reload_btn.setEnabled(False)
         self._reload_btn.clicked.connect(lambda: self._load(self._current_path))
         toolbar.addWidget(self._reload_btn)
 
-        self._auto_check = QCheckBox("纵轴自适应")
-        self._auto_check.setToolTip(
-            "开启后纵轴高度自动贴合当前可见数据的最低/最高值，并标记谷值与峰值；"
-            "仅此模式可用 Ctrl+滚轮缩放纵轴。"
-        )
+        self._auto_check = QCheckBox(tr("check.auto_scale"))
+        self._auto_check.setToolTip(tr("auto_scale.tooltip"))
         self._auto_check.setChecked(self._auto_scale_default)
         toolbar.addWidget(self._auto_check)
 
-        self._path_label = QLabel("尚未选择文件")
+        self._path_label = QLabel(tr("history.no_file"))
         self._path_label.setStyleSheet("color: #4B5563;")
         self._path_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
         toolbar.addWidget(self._path_label, 1)
         root.addLayout(toolbar)
 
-        self._stats_group = QGroupBox("统计摘要")
+        self._stats_group = QGroupBox(tr("history.summary"))
         self._stats_grid = QGridLayout(self._stats_group)
         self._stats_grid.setHorizontalSpacing(18)
         self._stats_grid.setVerticalSpacing(6)
@@ -108,7 +107,7 @@ class HistoryDialog(QDialog):
                 widget.deleteLater()
         for index, (key, value) in enumerate(rows):
             row, col = divmod(index, 4)
-            key_label = QLabel(f"{key}：")
+            key_label = QLabel(f"{key}{tr('history.key_suffix')}")
             key_label.setStyleSheet("color: #6B7280;")
             value_label = QLabel(value)
             value_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
@@ -120,7 +119,7 @@ class HistoryDialog(QDialog):
     def _on_open(self) -> None:
         start_dir = self._default_dir if os.path.isdir(self._default_dir) else ""
         path, _ = QFileDialog.getOpenFileName(
-            self, "选择要查看的 CSV 文件", start_dir, "CSV 文件 (*.csv);;所有文件 (*)"
+            self, tr("history.choose"), start_dir, tr("history.filter")
         )
         if path:
             self._load(path)
@@ -142,15 +141,15 @@ class HistoryDialog(QDialog):
 
         if data.error:
             self._chart.clear()
-            self._set_stats([("错误", data.error)])
-            self._notice.setText(f"无法读取该文件：{data.error}")
+            self._set_stats([(tr("history.error"), data.error)])
+            self._notice.setText(tr("history.cannot_read", error=data.error))
             self._notice.setVisible(True)
             return
 
         if data.count == 0:
             self._chart.clear()
-            self._set_stats([("样本数", "0")])
-            self._notice.setText("文件中没有可用的数据行。")
+            self._set_stats([(tr("history.samples"), "0")])
+            self._notice.setText(tr("history.empty"))
             self._notice.setVisible(True)
             return
 
@@ -160,43 +159,39 @@ class HistoryDialog(QDialog):
 
     def _build_stats(self, data) -> list[tuple[str, str]]:
         rows = [
-            ("样本数", f"{data.count}"),
-            ("起始时间", data.start_text),
-            ("结束时间", data.end_text),
-            ("记录时长", data.duration_text),
+            (tr("history.samples"), f"{data.count}"),
+            (tr("history.start"), data.start_text),
+            (tr("history.end"), data.end_text),
+            (tr("history.duration"), data.duration_text),
         ]
         if data.cpu_count:
             rows += [
-                ("CPU 均值", f"{data.cpu_mean:.1f}%"),
-                ("CPU 最大", f"{data.cpu_max:.1f}%"),
-                ("CPU 最小", f"{data.cpu_min:.1f}%"),
+                (tr("history.cpu_mean"), f"{data.cpu_mean:.1f}%"),
+                (tr("history.cpu_max"), f"{data.cpu_max:.1f}%"),
+                (tr("history.cpu_min"), f"{data.cpu_min:.1f}%"),
             ]
         else:
-            rows.append(("CPU", "无数据"))
+            rows.append(("CPU", tr("history.no_data")))
         if data.mem_count:
             rows += [
-                ("内存均值", f"{data.mem_mean:.1f}%"),
-                ("内存最大", f"{data.mem_max:.1f}%"),
-                ("内存最小", f"{data.mem_min:.1f}%"),
+                (tr("history.mem_mean"), f"{data.mem_mean:.1f}%"),
+                (tr("history.mem_max"), f"{data.mem_max:.1f}%"),
+                (tr("history.mem_min"), f"{data.mem_min:.1f}%"),
                 (
-                    "内存均值(GB)",
+                    tr("history.mem_mean_gb"),
                     f"{data.mem_used_mean / BYTES_PER_GB:.2f} / {data.mem_total_gb:.2f} GB",
                 ),
             ]
         else:
-            rows.append(("内存", "无数据"))
+            rows.append((tr("chart.mem"), tr("history.no_data")))
         return rows
 
     def _render_notices(self, data) -> None:
         messages = []
         if data.skipped_rows:
-            messages.append(
-                f"已跳过 {data.skipped_rows} 行异常数据（文件末尾可能因断电/崩溃不完整，属正常现象）。"
-            )
+            messages.append(tr("history.skipped", n=data.skipped_rows))
         if data.count >= BIG_FILE_ROWS:
-            messages.append(
-                f"该文件较大（{data.count} 行），曲线已自动降采样显示，统计仍基于全量数据。"
-            )
+            messages.append(tr("history.downsampled", n=data.count))
         self._notice.setText("  ".join(messages))
         self._notice.setVisible(bool(messages))
 
@@ -255,10 +250,10 @@ def _format_seconds(seconds: float) -> str:
     hours, remainder = divmod(seconds, 3600)
     minutes, secs = divmod(remainder, 60)
     if hours:
-        return f"{hours} 小时 {minutes} 分 {secs} 秒"
+        return tr("duration.hms", h=hours, m=minutes, s=secs)
     if minutes:
-        return f"{minutes} 分 {secs} 秒"
-    return f"{secs} 秒"
+        return tr("duration.ms", m=minutes, s=secs)
+    return tr("duration.s", s=secs)
 
 
 def parse_csv(path: str) -> _ParsedData:
@@ -275,13 +270,13 @@ def parse_csv(path: str) -> _ParsedData:
             try:
                 header = next(reader)
             except StopIteration:
-                data.error = "文件为空"
+                data.error = tr("parse.error.empty")
                 return data
 
             header = [h.strip() for h in header]
             index = {name: i for i, name in enumerate(header)}
             if "timestamp_unix_ms" not in index and "timestamp_iso" not in index:
-                data.error = "缺少时间戳列，可能不是 SysGauge 生成的 CSV"
+                data.error = tr("parse.error.no_timestamp")
                 return data
 
             width = len(header)
@@ -322,7 +317,7 @@ def parse_csv(path: str) -> _ParsedData:
         data.error = str(exc)
         return data
     except csv.Error as exc:
-        data.error = f"CSV 解析失败：{exc}"
+        data.error = tr("parse.error.csv", error=exc)
         return data
 
     if data.count:

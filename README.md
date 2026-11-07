@@ -6,16 +6,16 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)
 ![Platform](https://img.shields.io/badge/Platform-Windows%2010%2F11-0078D4?logo=windows&logoColor=white)
-![Version](https://img.shields.io/badge/Version-1.1.0-blue)
+![Version](https://img.shields.io/badge/Version-1.2.0-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
 SysGauge samples system metrics with `psutil`, draws real-time charts with PySide6 + pyqtgraph, and runs `flush + fsync` after every sample when writing CSV. It is built for long recording sessions, stutter investigations, and performance test reports.
 
 ## Screenshots
 
-![Main window](docs/screenshots/main-window.png)
+![Main window](docs/screenshots/main-en.png)
 
-![History](docs/screenshots/history.png)
+![History](docs/screenshots/history-en.png)
 
 ## Features
 
@@ -30,6 +30,7 @@ SysGauge samples system metrics with `psutil`, draws real-time charts with PySid
 - **Tray resident**: Closing the window minimizes to the tray and recording continues; the tray icon color follows CPU usage.
 - **Single instance**: Launching again activates the existing window, preventing multiple instances from writing at once.
 - **Light/dark adaptive**: Chart colors come from the system palette and follow the window theme.
+- **Multi-language UI**: English, 简体中文, 日本語, Deutsch, and Español. Switch from the main window; the choice is saved and follows the system language on first run.
 
 ## Requirements
 
@@ -138,6 +139,7 @@ SysGauge/
 │   ├── metrics.py        # psutil metric collection and CSV column definitions
 │   ├── sampler.py        # Sampling thread (absolute-time scheduling)
 │   ├── recorder.py       # CSV append, fsync, file rotation
+│   ├── i18n.py           # UI strings and language switching
 │   └── config.py         # Config read/write and validation
 ├── assets/               # App icons (ICO / SVG)
 ├── docs/screenshots/     # README screenshots

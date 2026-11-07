@@ -14,6 +14,7 @@ from PySide6.QtWidgets import QApplication, QMenu, QMessageBox, QSystemTrayIcon
 
 from . import __app_name__, __version__
 from .config import AppConfig, log_dir
+from .i18n import detect_system_language, set_language, tr
 from .main_window import MainWindow
 from .recorder import CsvRecorder
 from .sampler import Sampler
@@ -72,8 +73,8 @@ def install_excepthook() -> None:
         try:
             QMessageBox.critical(
                 None,
-                "程序异常",
-                f"发生未预期的错误：{exc_value}\n\n详情已写入日志：{log_dir()}",
+                tr("error.unexpected.title"),
+                tr("error.unexpected.body", error=exc_value, dir=log_dir()),
             )
         except Exception:  # pragma: no cover - 异常处理中不再抛异常
             pass
@@ -186,27 +187,27 @@ class SingleInstanceGuard:
 def _build_tray(app: QApplication, window: MainWindow) -> QSystemTrayIcon:
     tray = QSystemTrayIcon(app)
     tray.setIcon(_make_icon(COLOR_IDLE))
-    tray.setToolTip(f"{__app_name__} - 未在记录")
+    tray.setToolTip(tr("tray.tooltip_idle", app=__app_name__))
 
     menu = QMenu()
-    action_show = menu.addAction("显示主窗口")
+    action_show = menu.addAction(tr("tray.show"))
     action_show.triggered.connect(window.show_and_raise)
 
     menu.addSeparator()
-    action_start = menu.addAction("开始记录")
+    action_start = menu.addAction(tr("btn.start"))
     action_start.triggered.connect(window.start_recording)
-    action_stop = menu.addAction("停止记录")
+    action_stop = menu.addAction(tr("btn.stop"))
     action_stop.setEnabled(False)
     action_stop.triggered.connect(window.stop_recording)
 
     menu.addSeparator()
-    action_dir = menu.addAction("打开数据目录")
+    action_dir = menu.addAction(tr("tray.open_dir"))
     action_dir.triggered.connect(window.open_data_dir)
-    action_history = menu.addAction("打开历史数据…")
+    action_history = menu.addAction(tr("tray.history"))
     action_history.triggered.connect(window.open_history)
 
     menu.addSeparator()
-    action_quit = menu.addAction("退出")
+    action_quit = menu.addAction(tr("tray.quit"))
     action_quit.triggered.connect(lambda: _quit(app, window))
 
     tray.setContextMenu(menu)
@@ -215,8 +216,36 @@ def _build_tray(app: QApplication, window: MainWindow) -> QSystemTrayIcon:
         if reason in (QSystemTrayIcon.DoubleClick, QSystemTrayIcon.Trigger)
         else None
     )
+    tray._actions = {  # type: ignore[attr-defined]
+        "show": action_show,
+        "start": action_start,
+        "stop": action_stop,
+        "dir": action_dir,
+        "history": action_history,
+        "quit": action_quit,
+    }
     window.set_tray_actions(action_start, action_stop)
     return tray
+
+
+def _retranslate_tray(tray: QSystemTrayIcon | None) -> None:
+    """语言切换后刷新托盘菜单与提示。"""
+    if tray is None:
+        return
+    actions = getattr(tray, "_actions", {})
+    mapping = {
+        "show": "tray.show",
+        "start": "btn.start",
+        "stop": "btn.stop",
+        "dir": "tray.open_dir",
+        "history": "tray.history",
+        "quit": "tray.quit",
+    }
+    for name, key in mapping.items():
+        action = actions.get(name)
+        if action is not None:
+            action.setText(tr(key))
+    tray.setToolTip(tr("tray.tooltip_idle", app=__app_name__))
 
 
 def _update_tray(tray: QSystemTrayIcon | None, sample) -> None:
@@ -226,8 +255,8 @@ def _update_tray(tray: QSystemTrayIcon | None, sample) -> None:
 
     cpu_text = "--" if sample.cpu_percent is None else f"{sample.cpu_percent:.0f}%"
     mem_text = "--" if sample.mem_percent is None else f"{sample.mem_percent:.0f}%"
-    state = "记录中" if sample.cpu_percent is not None else "未在记录"
-    tray.setToolTip(f"{__app_name__} - CPU {cpu_text} / 内存 {mem_text}（{state}）")
+    state = tr("tray.state_recording") if sample.cpu_percent is not None else tr("tray.state_idle")
+    tray.setToolTip(tr("tray.status", app=__app_name__, cpu=cpu_text, mem=mem_text, state=state))
 
 
 def _quit(app: QApplication, window: MainWindow) -> None:
@@ -255,6 +284,10 @@ def main() -> int:
         return 0
 
     cfg = AppConfig.load()
+    if not cfg.language:
+        cfg.language = detect_system_language()
+        cfg.save()
+    set_language(cfg.language)
     cfg.ensure_save_dir()
 
     recorder = CsvRecorder(cfg.save_dir, cfg.rotate_mb)
@@ -285,6 +318,7 @@ def main() -> int:
             recorder.stop()
 
     window.notify.connect(on_notify)
+    window.language_changed.connect(lambda _code: _retranslate_tray(tray))
     app.aboutToQuit.connect(on_shutdown)
     guard.on_activate = window.show_and_raise
     sampler.sample_ready.connect(lambda sample: _update_tray(tray, sample))
@@ -292,7 +326,7 @@ def main() -> int:
     window.show_and_raise()
     if tray is not None:
         tray.show()
-        window.notify.emit("SysGauge 已启动", "点击【开始记录】即可开始记录 CPU 与内存占用。")
+        window.notify.emit(tr("app.started"), tr("app.started.body"))
 
     return app.exec()
 
